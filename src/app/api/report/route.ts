@@ -14,7 +14,8 @@ const streamFinished = promisify(finished);
 
 async function renderChartToImage(id: string | null, timestamp: number) {
   try {
-    const dirPath = path.join(process.cwd(), `output/${timestamp}`);
+    // Use /tmp for temporary storage
+    const dirPath = path.join("/tmp", `output/${timestamp}`);
     await fsPromise.mkdir(dirPath, { recursive: true });
 
     const browser = await puppeteer.launch({
