@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium-min";
+import puppeteer from "puppeteer-core";
 import PdfPrinter from "pdfmake";
 import fsPromise from "fs/promises";
 import fs from "fs";
@@ -19,8 +20,12 @@ async function renderChartToImage(id: string | null, timestamp: number) {
     await fsPromise.mkdir(dirPath, { recursive: true });
 
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(
+        `https://github.com/Sparticuz/chromium/releases/download/v130.0.0/chromium-v130.0.0-pack.tar`
+      ),
+      headless: chromium.headless,
     });
 
     const page = await browser.newPage();
