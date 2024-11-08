@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 import PdfPrinter from "pdfmake";
 import fsPromise from "fs/promises";
 import fs from "fs";
 import path from "path";
 
-async function renderChartToImage() {
+async function renderChartToImage(id: string | null) {
   try {
     const browser = await puppeteer.launch({
       headless: true,
@@ -14,9 +15,10 @@ async function renderChartToImage() {
     });
 
     const page = await browser.newPage();
-    const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/charts/blood-pressure`;
 
+    const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/charts/blood-pressure?id=${id}`;
     await page.goto(chartUrl, { waitUntil: "networkidle0" });
+    await page.waitForSelector("#chart-container");
 
     await page.setViewport({
       height: 550,
@@ -50,8 +52,14 @@ async function renderChartToImage() {
   }
 }
 
-export async function GET() {
-  const chartImagePath = await renderChartToImage();
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<Record<string, string>> }
+) {
+  const searchParams = request.nextUrl.searchParams;
+  const id = searchParams.get("id");
+
+  const chartImagePath = await renderChartToImage(id);
 
   const fonts = {
     Roboto: {

@@ -7,8 +7,16 @@ const SegmentedAreaChart = dynamic(
   }
 );
 
-const BloodPressurePage = () => {
-  return <SegmentedAreaChart />;
+interface PageProps<T = Record<string, unknown>> {
+  params: T;
+  searchParams: Record<string, string | undefined>;
+}
+
+const BloodPressurePage = (params: PageProps) => {
+  const { searchParams } = params;
+  const id = searchParams?.id;
+
+  return <SegmentedAreaChart id={id} />;
 };
 
 export default BloodPressurePage;
