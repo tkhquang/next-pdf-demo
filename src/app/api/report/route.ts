@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
-import chromium from "@sparticuz/chromium-min";
+// import puppeteer from "puppeteer";
 import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import PdfPrinter from "pdfmake";
 import fsPromise from "fs/promises";
 import fs from "fs";
@@ -19,13 +20,29 @@ async function renderChartToImage(id: string | null, timestamp: number) {
     const dirPath = path.join("/tmp", `output/${timestamp}`);
     await fsPromise.mkdir(dirPath, { recursive: true });
 
+    // const browser = await puppeteer.launch({
+    //   args: ["--hide-scrollbars", "--disable-web-security"],
+    //   headless: true,
+    // });
+
     const browser = await puppeteer.launch({
-      args: [...chromium.args, "--hide-scrollbars", "--disable-web-security"],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(
-        `https://github.com/Sparticuz/chromium/releases/download/v130.0.0/chromium-v130.0.0-pack.tar`
-      ),
-      headless: chromium.headless,
+      args: [
+        ...chromium.args,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-session-crashed-bubble",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process",
+        "--noerrdialogs",
+        "--disable-gpu",
+        "--hide-scrollbars",
+        "--disable-web-security",
+      ],
+      executablePath: await chromium.executablePath(),
+      headless: true,
     });
 
     const page = await browser.newPage();
@@ -50,9 +67,6 @@ async function renderChartToImage(id: string | null, timestamp: number) {
     throw error;
   }
 }
-
-// For vercel deployment
-export const maxDuration = 30;
 
 export async function GET(
   request: NextRequest,
