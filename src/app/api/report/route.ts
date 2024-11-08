@@ -51,6 +51,9 @@ async function renderChartToImage(id: string | null, timestamp: number) {
   }
 }
 
+// For vercel deployment
+export const maxDuration = 30;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<Record<string, string>> }
