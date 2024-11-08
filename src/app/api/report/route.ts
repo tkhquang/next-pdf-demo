@@ -6,10 +6,11 @@ import PdfPrinter from "pdfmake";
 import fsPromise from "fs/promises";
 import fs from "fs";
 import path from "path";
-import util from "util";
+import { promisify } from "util";
+import { finished } from "stream";
 
 // Convert fs.createWriteStream to a promise for better async handling
-const streamFinished = util.promisify(require("stream").finished);
+const streamFinished = promisify(finished);
 
 async function renderChartToImage(id: string | null, timestamp: number) {
   try {
