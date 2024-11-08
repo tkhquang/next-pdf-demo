@@ -6,16 +6,22 @@ import PdfPrinter from "pdfmake";
 import fsPromise from "fs/promises";
 import fs from "fs";
 import path from "path";
+import util from "util";
 
-async function renderChartToImage(id: string | null) {
+// Convert fs.createWriteStream to a promise for better async handling
+const streamFinished = util.promisify(require("stream").finished);
+
+async function renderChartToImage(id: string | null, timestamp: number) {
   try {
+    const dirPath = path.join(process.cwd(), `output/${timestamp}`);
+    await fsPromise.mkdir(dirPath, { recursive: true });
+
     const browser = await puppeteer.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = await browser.newPage();
-
     const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/charts/blood-pressure?id=${id}`;
     await page.goto(chartUrl, { waitUntil: "networkidle0" });
     await page.waitForSelector("#chart-container");
@@ -25,30 +31,16 @@ async function renderChartToImage(id: string | null) {
       width: 1400,
     });
 
-    const screenshot = await page.screenshot({ type: "png" });
+    const screenshotPath = path.join(dirPath, "chart-screenshot.png");
+    await page.screenshot({ path: screenshotPath, type: "png" });
 
     await browser.close();
 
-    // Ensure the 'output' directory exists
-    const dirPath = path.join(process.cwd(), "output");
-    try {
-      await fsPromise.mkdir(dirPath, { recursive: true });
-    } catch (mkdirError) {
-      console.error("Error creating directory:", mkdirError);
-      throw mkdirError;
-    }
-
-    /**
-     * Save the screenshot to the 'output' directory
-     * output/chart-screenshot.png
-     * */
-    const filePath = path.join(dirPath, "chart-screenshot.png");
-    await fsPromise.writeFile(filePath, screenshot);
-
-    console.log(`Chart image saved at ${filePath}`);
-    return filePath;
+    console.log(`Chart image saved at ${screenshotPath}`);
+    return { screenshotPath, dirPath };
   } catch (error) {
     console.error("Error generating chart:", error);
+    throw error;
   }
 }
 
@@ -58,39 +50,55 @@ export async function GET(
 ) {
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get("id");
+  const timestamp = Date.now();
 
-  const chartImagePath = await renderChartToImage(id);
+  try {
+    const { screenshotPath, dirPath } = await renderChartToImage(id, timestamp);
 
-  const fonts = {
-    Roboto: {
-      normal: "src/app/fonts/Roboto-Regular.ttf",
-      bold: "src/app/fonts/Roboto-Medium.ttf",
-      italics: "src/app/fonts/Roboto-Italic.ttf",
-      bolditalics: "src/app/fonts/Roboto-MediumItalic.ttf",
-    },
-  };
-
-  const printer = new PdfPrinter(fonts);
-
-  const docDefinition = {
-    content: [
-      {
-        image: chartImagePath,
-        width: 500,
+    const fonts = {
+      Roboto: {
+        normal: "src/app/fonts/Roboto-Regular.ttf",
+        bold: "src/app/fonts/Roboto-Medium.ttf",
+        italics: "src/app/fonts/Roboto-Italic.ttf",
+        bolditalics: "src/app/fonts/Roboto-MediumItalic.ttf",
       },
-    ],
-  } as any;
+    };
 
-  const pdfDoc = printer.createPdfKitDocument(docDefinition);
-  pdfDoc.pipe(fs.createWriteStream("output/document.pdf"));
-  pdfDoc.end();
+    const printer = new PdfPrinter(fonts);
+    const docDefinition = {
+      content: [
+        {
+          image: screenshotPath,
+          width: 500,
+        },
+      ],
+    } as any;
 
-  const response = new NextResponse(pdfDoc as any);
-  response.headers.set("Content-Type", "application/pdf");
+    const pdfFilePath = path.join(dirPath, "document.pdf");
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    const writeStream = fs.createWriteStream(pdfFilePath);
+    pdfDoc.pipe(writeStream);
+    pdfDoc.end();
 
-  response.headers.set(
-    "Content-Disposition",
-    "attachment; filename=document.pdf"
-  );
-  return response;
+    // Wait for the stream to finish writing before proceeding
+    await streamFinished(writeStream);
+
+    // Read the PDF file to send as a response
+    const pdfBuffer = await fsPromise.readFile(pdfFilePath);
+
+    // Remove the timestamped directory after the PDF is created
+    await fsPromise.rm(dirPath, { recursive: true, force: true });
+
+    const response = new NextResponse(pdfBuffer);
+    response.headers.set("Content-Type", "application/pdf");
+    response.headers.set(
+      "Content-Disposition",
+      "attachment; filename=document.pdf"
+    );
+
+    return response;
+  } catch (error) {
+    console.error("Error processing PDF generation:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
 }
