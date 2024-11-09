@@ -62,7 +62,7 @@ function SegmentedAreaChart() {
             tick === 180 ? `>=${tick}` : `${tick}`
           }
           ticks={[100, 110, 120, 130, 140, 150, 158, 170, 180]}
-          fontSize="0.75rem"
+          className="text-xs"
         />
         <XAxis
           dataKey="dias"
@@ -73,7 +73,7 @@ function SegmentedAreaChart() {
             tick === 120 ? `>=${tick}` : `${tick}`
           }
           ticks={[60, 70, 80, 90, 100, 110, 120]}
-          fontSize="0.75rem"
+          className="text-xs"
         />
 
         <ReferenceArea
@@ -92,9 +92,9 @@ function SegmentedAreaChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            className="text-xs"
             style={{
-              textShadow: "1px 1px #000000",
-              fontSize: "0.75rem",
+              filter: "drop-shadow(1px 1px #000000)",
             }}
           />
         </ReferenceArea>
@@ -115,9 +115,9 @@ function SegmentedAreaChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            className="text-xs"
             style={{
-              textShadow: "1px 1px #000000",
-              fontSize: "0.75rem",
+              filter: "drop-shadow(1px 1px #000000)",
             }}
           />
         </ReferenceArea>
@@ -138,9 +138,9 @@ function SegmentedAreaChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            className="text-xs"
             style={{
-              textShadow: "1px 1px #000000",
-              fontSize: "0.75rem",
+              filter: "drop-shadow(1px 1px #000000)",
             }}
           />
         </ReferenceArea>
@@ -161,9 +161,9 @@ function SegmentedAreaChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            className="text-xs"
             style={{
-              textShadow: "1px 1px #000000",
-              fontSize: "0.75rem",
+              filter: "drop-shadow(1px 1px #000000)",
             }}
           />
         </ReferenceArea>

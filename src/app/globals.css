@@ -74,4 +74,11 @@ body {
   .page-break:last-of-type {
     display: none;
   }
+
+  .print-color-exact {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    filter: blur(0);
+    -webkit-filter: blur(0);
+  }
 }
