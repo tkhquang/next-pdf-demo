@@ -20,8 +20,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 
   width: 595px;
-  border: 1px solid red;
-
   @apply mx-auto my-4;
 }
 
@@ -35,6 +33,7 @@ body {
   }
 
   .page {
+  border: 1px solid red;
     @apply min-h-[842px] aspect-[595/842];
   }
 }
@@ -44,7 +43,6 @@ body {
     font-size: 16px;
     color: var(--foreground);
     background: var(--background);
-    border: none;
   }
 
   @page {
@@ -70,5 +68,6 @@ body {
   .page {
     min-width: 100%;
     min-height: auto;
+    border: none;
   }
 }

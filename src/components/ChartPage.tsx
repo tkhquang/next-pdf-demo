@@ -1,3 +1,4 @@
+import Page from "@/components/common/Page";
 import dynamic from "next/dynamic";
 
 const SegmentedAreaChart = dynamic(
@@ -13,10 +14,12 @@ interface ChartPageProps {
 
 function ChartPage({ id = null }: ChartPageProps) {
   return (
-    <div className="flex flex-col size-full space-y-4">
-      {id && <h1 className="text-4xl">{id}</h1>}
-      <SegmentedAreaChart />
-    </div>
+    <Page>
+      <div className="flex flex-col size-full space-y-4">
+        {id && <h1 className="text-4xl">{id}</h1>}
+        <SegmentedAreaChart />
+      </div>
+    </Page>
   );
 }
 

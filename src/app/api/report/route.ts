@@ -1,20 +1,24 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
-import puppeteer from "puppeteer";
-// import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 import fsPromise from "fs/promises";
 import path from "path";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 async function renderChartToImage(id: string | null, timestamp: number) {
   try {
-    // // Use /tmp for temporary storage
-    const dirPath = path.join("/tmp", `output/${timestamp}`);
-
-    // const dirPath = `output/${timestamp}`;
+    // Use /tmp for temporary storage on vercel to allow write
+    const dirPath = isProduction
+      ? path.join("/tmp", `output/${timestamp}`)
+      : `output/${timestamp}`;
 
     await fsPromise.mkdir(dirPath, { recursive: true });
+
+    const puppeteer = isProduction
+      ? await import("puppeteer-core")
+      : await import("puppeteer");
 
     const browser = await puppeteer.launch({
       args: [
@@ -31,31 +35,11 @@ async function renderChartToImage(id: string | null, timestamp: number) {
         "--hide-scrollbars",
         "--disable-web-security",
       ],
-      ...(process.env.NODE_ENV === "production" && {
+      ...(isProduction && {
         executablePath: await chromium.executablePath(),
       }),
       headless: true,
     });
-
-    // const browser = await puppeteer.launch({
-    //   args: [
-    //     ...chromium.args,
-    //     "--no-sandbox",
-    //     "--disable-setuid-sandbox",
-    //     "--disable-dev-shm-usage",
-    //     "--disable-session-crashed-bubble",
-    //     "--disable-accelerated-2d-canvas",
-    //     "--no-first-run",
-    //     "--no-zygote",
-    //     "--single-process",
-    //     "--noerrdialogs",
-    //     "--disable-gpu",
-    //     "--hide-scrollbars",
-    //     "--disable-web-security",
-    //   ],
-    //   executablePath: await chromium.executablePath(),
-    //   headless: true,
-    // });
 
     const page = await browser.newPage();
     const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
@@ -92,20 +76,13 @@ export async function GET(
   try {
     const { dirPath, pdfPath } = await renderChartToImage(id, timestamp);
 
-    // const pdfFilePath = path.join(dirPath, "document.pdf");
-    // const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    // const writeStream = fs.createWriteStream(pdfFilePath);
-    // pdfDoc.pipe(writeStream);
-    // pdfDoc.end();
-
-    // // Wait for the stream to finish writing before proceeding
-    // await streamFinished(writeStream);
-
     // Read the PDF file to send as a response
     const pdfBuffer = await fsPromise.readFile(pdfPath);
 
-    // Remove the timestamped directory after the PDF is created
-    await fsPromise.rm(dirPath, { recursive: true, force: true });
+    if (isProduction) {
+      // Remove the timestamped directory after the PDF is created
+      await fsPromise.rm(dirPath, { recursive: true, force: true });
+    }
 
     const response = new NextResponse(pdfBuffer);
     response.headers.set("Content-Type", "application/pdf");

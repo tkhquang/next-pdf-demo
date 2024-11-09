@@ -12,6 +12,13 @@ export default async function Home(props: PageProps) {
 
   return (
     <main>
+      <a
+        className="print:hidden"
+        href={`${process.env.NEXT_PUBLIC_BASE_URL}/api/report?id=Example`}
+        download="document.pdf"
+      >
+        Download PDF
+      </a>
       <CoverPage />
       <ChartPage id={id} />
     </main>
