@@ -18,16 +18,6 @@ async function getBrowserInstance(): Promise<Browser> {
   if (!browser) {
     console.log("Launching a new browser instance...");
 
-    if (!executablePath) {
-      executablePath = await chromium.executablePath();
-    }
-
-    if (!puppeteer) {
-      puppeteer = isProduction
-        ? await import("puppeteer-core")
-        : await import("puppeteer");
-    }
-
     browser = await puppeteer.launch({
       args: [
         ...(isProduction ? chromium.args : []),
@@ -60,8 +50,7 @@ async function getBrowserInstance(): Promise<Browser> {
 
 // Render a page to a PDF
 async function renderPageToPDF(url: string, pdfPath: string): Promise<void> {
-  const browser = await getBrowserInstance();
-  const page = await browser.newPage();
+  const page = await browser!.newPage();
 
   try {
     await page.goto(url, { waitUntil: "networkidle0" });
@@ -146,6 +135,20 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get("id");
   const timestamp = Date.now();
+
+  if (!puppeteer) {
+    puppeteer = isProduction
+      ? await import("puppeteer-core")
+      : await import("puppeteer");
+  }
+
+  if (!executablePath) {
+    executablePath = await chromium.executablePath();
+  }
+
+  if (!browser) {
+    browser = await getBrowserInstance();
+  }
 
   try {
     const { dirPath, mergedPdfBuffer } = await renderPagesToMergedPDF(
