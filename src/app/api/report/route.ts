@@ -13,6 +13,7 @@ let browser: Browser | null = null;
 
 async function getBrowserInstance(puppeteer: any): Promise<Browser> {
   if (!browser) {
+    console.log("Launching a new browser instance...");
     browser = await puppeteer.launch({
       args: [
         ...(isProduction ? chromium.args : []),
@@ -22,6 +23,12 @@ async function getBrowserInstance(puppeteer: any): Promise<Browser> {
         "--disable-gpu",
         "--hide-scrollbars",
         "--disable-web-security",
+        "--disable-extensions",
+        "--disable-infobars",
+        "--disable-notifications",
+        "--no-first-run",
+        "--disable-background-networking",
+        "--disable-background-timer-throttling",
       ],
       headless: true,
       ...(isProduction
@@ -42,23 +49,23 @@ async function renderPageToPDF(
   const browser = await getBrowserInstance(puppeteer);
   const page = await browser.newPage();
 
-  await page.goto(url, { waitUntil: "networkidle0" });
-
-  // Take a screenshot for debugging purposes
-  await page.screenshot({
-    path: pdfPath.replace(".pdf", ".png"),
-    fullPage: true,
-  });
-
-  // Generate the PDF with print settings
-  await page.emulateMediaType("print");
-  await page.pdf({
-    format: "A4",
-    path: pdfPath,
-    printBackground: true,
-  });
-
-  await page.close();
+  try {
+    await page.goto(url, { waitUntil: "networkidle0" });
+    await page.emulateMediaType("print");
+    await page.pdf({
+      format: "A4",
+      path: pdfPath,
+      printBackground: true,
+      margin: {
+        top: "0in",
+        right: "0in",
+        bottom: "0in",
+        left: "0in",
+      }, // Prevent blank pages
+    });
+  } finally {
+    await page.close();
+  }
 }
 
 async function mergePDFs(pdfPaths: string[]): Promise<Buffer> {
@@ -92,12 +99,12 @@ async function renderPageToImage(
       : await import("puppeteer");
 
     try {
-      // URLs for the main chart and additional pages
-      const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
+      // Render pages concurrently using Promise.all
+      const mainUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
       const additionalPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/other-page`;
 
       await Promise.all([
-        renderPageToPDF(chartUrl, mainPdfPath, puppeteer),
+        renderPageToPDF(mainUrl, mainPdfPath, puppeteer),
         renderPageToPDF(additionalPageUrl, additionalPdfPath, puppeteer),
       ]);
 
@@ -119,6 +126,14 @@ async function renderPageToImage(
     throw error;
   }
 }
+
+// Pre-launch the browser on server startup
+(async () => {
+  const puppeteer = isProduction
+    ? await import("puppeteer-core")
+    : await import("puppeteer");
+  browser = await getBrowserInstance(puppeteer);
+})();
 
 // For Vercel deployment
 export const maxDuration = 30;
