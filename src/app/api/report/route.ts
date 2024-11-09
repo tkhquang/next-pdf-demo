@@ -9,9 +9,12 @@ import type { Browser } from "puppeteer";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-let puppeteer: any = null;
+const executablePath = await chromium.executablePath();
+const puppeteer: any = isProduction
+  ? await import("puppeteer-core")
+  : await import("puppeteer");
 let browser: Browser | null = null;
-let executablePath: string | null = null;
+await getBrowserInstance();
 
 // Launch or reuse the browser instance
 async function getBrowserInstance(): Promise<Browser> {
@@ -50,6 +53,7 @@ async function getBrowserInstance(): Promise<Browser> {
 
 // Render a page to a PDF
 async function renderPageToPDF(url: string, pdfPath: string): Promise<void> {
+  const browser = await getBrowserInstance();
   const page = await browser!.newPage();
 
   try {
@@ -135,20 +139,6 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const id = searchParams.get("id");
   const timestamp = Date.now();
-
-  if (!puppeteer) {
-    puppeteer = isProduction
-      ? await import("puppeteer-core")
-      : await import("puppeteer");
-  }
-
-  if (!executablePath) {
-    executablePath = await chromium.executablePath();
-  }
-
-  if (!browser) {
-    browser = await getBrowserInstance();
-  }
 
   try {
     const { dirPath, mergedPdfBuffer } = await renderPagesToMergedPDF(

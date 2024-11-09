@@ -10,8 +10,7 @@ const CoverPage = () => {
             src="/images/background.jpg"
             fill
             alt=""
-            objectFit="cover"
-            objectPosition="bottom"
+            className="object-cover object-bottom"
           />
         </div>
         <div className="relative m-4 flex flex-col flex-1">
