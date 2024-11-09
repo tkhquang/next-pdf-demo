@@ -7,6 +7,8 @@ import path from "path";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+let browser: any = null;
+
 async function renderChartToImage(id: string | null, timestamp: number) {
   try {
     // Use /tmp for temporary storage on vercel to allow write
@@ -20,42 +22,49 @@ async function renderChartToImage(id: string | null, timestamp: number) {
       ? await import("puppeteer-core")
       : await import("puppeteer");
 
-    const browser = await puppeteer.launch({
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        // "--disable-session-crashed-bubble",
-        // "--disable-accelerated-2d-canvas",
-        // "--no-first-run",
-        // "--no-zygote",
-        // "--single-process",
-        // "--noerrdialogs",
-        "--disable-gpu",
-        "--hide-scrollbars",
-        "--disable-web-security",
-      ],
-      ...(isProduction && {
-        executablePath: await chromium.executablePath(),
-      }),
-      headless: true,
-    });
+    try {
+      browser = await puppeteer.launch({
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          // "--disable-session-crashed-bubble",
+          // "--disable-accelerated-2d-canvas",
+          // "--no-first-run",
+          // "--no-zygote",
+          // "--single-process",
+          // "--noerrdialogs",
+          "--disable-gpu",
+          "--hide-scrollbars",
+          "--disable-web-security",
+        ],
+        ...(isProduction && {
+          executablePath: await chromium.executablePath(),
+        }),
+        headless: true,
+      });
 
-    const page = await browser.newPage();
-    const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
-    await page.goto(chartUrl, { waitUntil: "networkidle0" });
-    // await page.waitForSelector("#chart-container");
+      const page = await browser.newPage();
+      const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
+      await page.goto(chartUrl, { waitUntil: "networkidle0" });
+      // await page.waitForSelector("#chart-container");
 
-    await page.emulateMediaType("print");
+      await page.emulateMediaType("print");
 
-    const pdfPath = path.join(dirPath, "document.pdf");
+      const pdfPath = path.join(dirPath, "document.pdf");
 
-    await page.pdf({ format: "A4", path: pdfPath });
+      await page.pdf({ format: "A4", path: pdfPath });
 
-    await browser.close();
-
-    console.log(`pdf saved at ${pdfPath}`);
-    return { dirPath, pdfPath };
+      console.log(`pdf saved at ${pdfPath}`);
+      return { dirPath, pdfPath };
+    } catch (error) {
+      console.error("Error launching browser:", error);
+      throw error;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
   } catch (error) {
     console.error("Error generating chart:", error);
     throw error;
@@ -97,3 +106,10 @@ export async function GET(
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
+
+// Close the browser instance when the process exits
+process.on("exit", async () => {
+  if (browser) {
+    await browser.close();
+  }
+});
