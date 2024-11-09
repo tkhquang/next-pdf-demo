@@ -9,12 +9,25 @@ import type { Browser } from "puppeteer";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+let puppeteer: any = null;
 let browser: Browser | null = null;
+let executablePath: string | null = null;
 
 // Launch or reuse the browser instance
-async function getBrowserInstance(puppeteer: any): Promise<Browser> {
+async function getBrowserInstance(): Promise<Browser> {
   if (!browser) {
     console.log("Launching a new browser instance...");
+
+    if (!executablePath) {
+      executablePath = await chromium.executablePath();
+    }
+
+    if (!puppeteer) {
+      puppeteer = isProduction
+        ? await import("puppeteer-core")
+        : await import("puppeteer");
+    }
+
     browser = await puppeteer.launch({
       args: [
         ...(isProduction ? chromium.args : []),
@@ -34,7 +47,7 @@ async function getBrowserInstance(puppeteer: any): Promise<Browser> {
       headless: true,
       ...(isProduction
         ? {
-            executablePath: await chromium.executablePath(),
+            executablePath,
           }
         : {}),
     });
@@ -46,12 +59,8 @@ async function getBrowserInstance(puppeteer: any): Promise<Browser> {
 }
 
 // Render a page to a PDF
-async function renderPageToPDF(
-  url: string,
-  pdfPath: string,
-  puppeteer: any
-): Promise<void> {
-  const browser = await getBrowserInstance(puppeteer);
+async function renderPageToPDF(url: string, pdfPath: string): Promise<void> {
+  const browser = await getBrowserInstance();
   const page = await browser.newPage();
 
   try {
@@ -110,17 +119,13 @@ async function renderPagesToMergedPDF(
   const additionalPdfPath = path.join(dirPath, "additional-page.pdf");
   await fsPromise.mkdir(dirPath, { recursive: true });
 
-  const puppeteer = isProduction
-    ? await import("puppeteer-core")
-    : await import("puppeteer");
-
   try {
     const mainUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
     const additionalPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/other-page`;
 
     await Promise.all([
-      renderPageToPDF(mainUrl, mainPdfPath, puppeteer),
-      renderPageToPDF(additionalPageUrl, additionalPdfPath, puppeteer),
+      renderPageToPDF(mainUrl, mainPdfPath),
+      renderPageToPDF(additionalPageUrl, additionalPdfPath),
     ]);
 
     const mergedPdfBuffer = await mergePDFs([mainPdfPath, additionalPdfPath]);
