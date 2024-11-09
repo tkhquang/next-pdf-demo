@@ -9,6 +9,7 @@ import {
   ReferenceDot,
   ReferenceLine,
   Line,
+  ResponsiveContainer,
 } from "recharts";
 
 const referenceValue = {
@@ -16,15 +17,20 @@ const referenceValue = {
   y: 130,
 };
 
-interface SegmentedLineChartProps {
-  id: string | null | undefined;
-}
-
-function SegmentedLineChart({ id = null }: SegmentedLineChartProps) {
+function SegmentedLineChart() {
   return (
-    <div>
-      <h1>{id}</h1>
-      <LineChart height={516} width={1344} id="chart-container">
+    <ResponsiveContainer width="100%" height="auto" aspect={1344 / 516}>
+      <LineChart
+        height={516}
+        width={1344}
+        id="chart-container"
+        margin={{
+          top: 4,
+          right: 4,
+          bottom: 4,
+          left: 4,
+        }}
+      >
         <YAxis
           dataKey="sys"
           type="number"
@@ -34,6 +40,7 @@ function SegmentedLineChart({ id = null }: SegmentedLineChartProps) {
             tick === 180 ? `>=${tick}` : `${tick}`
           }
           ticks={[100, 110, 120, 130, 140, 150, 158, 170, 180]}
+          fontSize="0.75rem"
         />
         <XAxis
           dataKey="dias"
@@ -44,6 +51,7 @@ function SegmentedLineChart({ id = null }: SegmentedLineChartProps) {
             tick === 120 ? `>=${tick}` : `${tick}`
           }
           ticks={[60, 70, 80, 90, 100, 110, 120]}
+          fontSize="0.75rem"
         />
 
         <ReferenceArea
@@ -185,7 +193,7 @@ function SegmentedLineChart({ id = null }: SegmentedLineChartProps) {
           }}
         />
       </LineChart>
-    </div>
+    </ResponsiveContainer>
   );
 }
 

@@ -28,6 +28,10 @@ bun dev
 
 Navigate to `http://localhost:3000/api/report` to download the pdf.
 
+[Emulate CSS media features](https://developer.chrome.com/docs/devtools/rendering/emulate-css) for development.
+
+---
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.

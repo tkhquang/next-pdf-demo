@@ -18,10 +18,57 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+
+  width: 595px;
+  border: 1px solid red;
+
+  @apply mx-auto my-4;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .page-break-line {
+    @apply h-px bg-gray-200 border-0 dark:bg-gray-700;
+  }
+
+  .page {
+    @apply min-h-[842px] aspect-[595/842];
+  }
+}
+
+@media print {
+  body {
+    font-size: 16px;
+    color: var(--foreground);
+    background: var(--background);
+    border: none;
+  }
+
+  @page {
+    size: A4 portrait;
+  }
+
+   /* Apply this class to every component that shouldn't be cut off between to pages of your PDF */
+  .no-break-inside {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+   /* Apply this class to every component that should always display on next page */
+  .break-before {
+    break-before: always;
+    page-break-before: always;
+  }
+
+  .page-break-line {
+    display: none;
+  }
+
+  .page {
+    min-width: 100%;
+    min-height: auto;
   }
 }
