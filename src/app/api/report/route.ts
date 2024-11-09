@@ -51,6 +51,15 @@ async function renderPageToPDF(
 
   try {
     await page.goto(url, { waitUntil: "networkidle0" });
+
+    if (!isProduction) {
+      // Take a screenshot for debugging purposes
+      await page.screenshot({
+        path: pdfPath.replace(".pdf", ".png"),
+        fullPage: true,
+      });
+    }
+
     await page.emulateMediaType("print");
     await page.pdf({
       format: "A4",
@@ -92,7 +101,7 @@ async function renderPageToImage(
     const dirPath = isProduction
       ? path.join("/tmp", `output/${timestamp}`)
       : `output/${timestamp}`;
-    const mainPdfPath = path.join(dirPath, "chart-document.pdf");
+    const mainPdfPath = path.join(dirPath, "main-document.pdf");
     const additionalPdfPath = path.join(dirPath, "additional-page.pdf");
     await fsPromise.mkdir(dirPath, { recursive: true });
 
