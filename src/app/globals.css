@@ -70,4 +70,8 @@ body {
     min-height: auto;
     border: none;
   }
+
+  .page-break:last-of-type {
+    display: none;
+  }
 }

@@ -15,7 +15,7 @@ const Page = ({
       >
         {children}
       </div>
-      <div className="break-before">
+      <div className="break-before page-break">
         <hr className="page-break-line" />
       </div>
     </>
