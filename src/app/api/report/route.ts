@@ -11,6 +11,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 let browser: Browser | null = null;
 
+// Launch or reuse the browser instance
 async function getBrowserInstance(puppeteer: any): Promise<Browser> {
   if (!browser) {
     console.log("Launching a new browser instance...");
@@ -37,10 +38,14 @@ async function getBrowserInstance(puppeteer: any): Promise<Browser> {
           }
         : {}),
     });
+    return browser!;
   }
+
+  console.log("Reusing existing browser instance...");
   return browser!;
 }
 
+// Render a page to a PDF
 async function renderPageToPDF(
   url: string,
   pdfPath: string,
@@ -53,7 +58,7 @@ async function renderPageToPDF(
     await page.goto(url, { waitUntil: "networkidle0" });
 
     if (!isProduction) {
-      // Take a screenshot for debugging purposes
+      // Take a screenshot for debugging in development
       await page.screenshot({
         path: pdfPath.replace(".pdf", ".png"),
         fullPage: true,
@@ -73,12 +78,13 @@ async function renderPageToPDF(
       },
     });
   } catch (error) {
-    console.error("Error rendering page to PDF:", error);
+    console.error(`Error rendering page at ${url} to PDF:`, error);
   } finally {
     await page.close();
   }
 }
 
+// Merge multiple PDFs into a single buffer
 async function mergePDFs(pdfPaths: string[]): Promise<Buffer> {
   const mergedPdf = await PDFDocument.create();
   for (const pdfPath of pdfPaths) {
@@ -93,49 +99,39 @@ async function mergePDFs(pdfPaths: string[]): Promise<Buffer> {
   return Buffer.from(await mergedPdf.save());
 }
 
-async function renderPageToImage(
+async function renderPagesToMergedPDF(
   id: string | null,
   timestamp: number
 ): Promise<{ dirPath: string; mergedPdfBuffer: Buffer }> {
+  const dirPath = isProduction
+    ? path.join("/tmp", `output/${timestamp}`)
+    : `output/${timestamp}`;
+  const mainPdfPath = path.join(dirPath, "main-document.pdf");
+  const additionalPdfPath = path.join(dirPath, "additional-page.pdf");
+  await fsPromise.mkdir(dirPath, { recursive: true });
+
+  const puppeteer = isProduction
+    ? await import("puppeteer-core")
+    : await import("puppeteer");
+
   try {
-    const dirPath = isProduction
-      ? path.join("/tmp", `output/${timestamp}`)
-      : `output/${timestamp}`;
-    const mainPdfPath = path.join(dirPath, "main-document.pdf");
-    const additionalPdfPath = path.join(dirPath, "additional-page.pdf");
-    await fsPromise.mkdir(dirPath, { recursive: true });
+    const mainUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
+    const additionalPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/other-page`;
 
-    const puppeteer = isProduction
-      ? await import("puppeteer-core")
-      : await import("puppeteer");
+    await Promise.all([
+      renderPageToPDF(mainUrl, mainPdfPath, puppeteer),
+      renderPageToPDF(additionalPageUrl, additionalPdfPath, puppeteer),
+    ]);
 
-    try {
-      const mainUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
-      const additionalPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/other-page`;
-
-      // Render pages concurrently
-      await Promise.all([
-        renderPageToPDF(mainUrl, mainPdfPath, puppeteer),
-        renderPageToPDF(additionalPageUrl, additionalPdfPath, puppeteer),
-      ]);
-
-      const mergedPdfBuffer = await mergePDFs([mainPdfPath, additionalPdfPath]);
-      return { dirPath, mergedPdfBuffer };
-    } catch (error) {
-      console.error("Error rendering pages or merging PDFs:", error);
-      throw error;
-    } finally {
-      if (browser) {
-        await browser.close();
-        browser = null;
-      }
-    }
+    const mergedPdfBuffer = await mergePDFs([mainPdfPath, additionalPdfPath]);
+    return { dirPath, mergedPdfBuffer };
   } catch (error) {
-    console.error("Error generating chart:", error);
+    console.error("Error rendering or merging PDFs:", error);
     throw error;
   }
 }
 
+// For Vercel deployment
 export const maxDuration = 30;
 
 export async function GET(
@@ -147,9 +143,13 @@ export async function GET(
   const timestamp = Date.now();
 
   try {
-    const { dirPath, mergedPdfBuffer } = await renderPageToImage(id, timestamp);
+    const { dirPath, mergedPdfBuffer } = await renderPagesToMergedPDF(
+      id,
+      timestamp
+    );
 
     if (isProduction) {
+      // Clean up temporary directory
       await fsPromise.rm(dirPath, { recursive: true, force: true });
     }
 
@@ -166,3 +166,15 @@ export async function GET(
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
+
+// Clean up browser on process exit
+const cleanupBrowser = async () => {
+  if (browser) {
+    await browser.close();
+    browser = null;
+    console.log("Browser instance closed");
+  }
+};
+
+process.on("SIGINT", cleanupBrowser);
+process.on("exit", cleanupBrowser);
