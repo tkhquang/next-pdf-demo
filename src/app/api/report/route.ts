@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 // import puppeteer from "puppeteer-core";
-// import chromium from "@sparticuz/chromium";
+import chromium from "@sparticuz/chromium";
 import fsPromise from "fs/promises";
 import path from "path";
 
@@ -31,6 +31,9 @@ async function renderChartToImage(id: string | null, timestamp: number) {
         "--hide-scrollbars",
         "--disable-web-security",
       ],
+      ...(process.env.NODE_ENV === "production" && {
+        executablePath: await chromium.executablePath(),
+      }),
       headless: true,
     });
 
