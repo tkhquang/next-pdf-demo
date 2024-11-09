@@ -15,7 +15,7 @@ async function renderChartToImage(id: string | null, timestamp: number) {
     const dirPath = isProduction
       ? path.join("/tmp", `output/${timestamp}`)
       : `output/${timestamp}`;
-
+    const pdfPath = path.join(dirPath, "document.pdf");
     await fsPromise.mkdir(dirPath, { recursive: true });
 
     const puppeteer = isProduction
@@ -29,12 +29,6 @@ async function renderChartToImage(id: string | null, timestamp: number) {
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--disable-dev-shm-usage",
-          // "--disable-session-crashed-bubble",
-          // "--disable-accelerated-2d-canvas",
-          // "--no-first-run",
-          // "--no-zygote",
-          // "--single-process",
-          // "--noerrdialogs",
           "--disable-gpu",
           "--hide-scrollbars",
           "--disable-web-security",
@@ -50,15 +44,13 @@ async function renderChartToImage(id: string | null, timestamp: number) {
       const page = await browser.newPage();
       const chartUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
       await page.goto(chartUrl, { waitUntil: "networkidle0" });
-      // await page.waitForSelector("#chart-container");
+
+      await page.waitForSelector("#segmented-area-chart");
 
       await page.emulateMediaType("print");
-
-      const pdfPath = path.join(dirPath, "document.pdf");
-
       await page.pdf({ format: "A4", path: pdfPath });
-
       console.log(`pdf saved at ${pdfPath}`);
+
       return { dirPath, pdfPath };
     } catch (error) {
       console.error("Error launching browser:", error);

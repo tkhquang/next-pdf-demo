@@ -39,13 +39,13 @@ function getClosestInRange(value: number, range: [number, number]): number {
   }
 }
 
-function SegmentedLineChart() {
+function SegmentedAreaChart() {
   return (
     <ResponsiveContainer width="100%" height="auto" aspect={1344 / 516}>
       <LineChart
         height={516}
         width={1344}
-        id="chart-container"
+        id="segmented-area-chart"
         margin={{
           top: 4,
           right: 4,
@@ -245,4 +245,4 @@ function SegmentedLineChart() {
   );
 }
 
-export default SegmentedLineChart;
+export default SegmentedAreaChart;

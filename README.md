@@ -4,7 +4,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
-### Pre-congiguration
+### Pre-configuration
 
 Copy an example .env file because the real one is git ignored:
 

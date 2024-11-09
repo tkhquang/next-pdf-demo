@@ -8,7 +8,6 @@ export default function DownloadButton() {
   const downloadPDF = async () => {
     try {
       setIsLoading(true);
-      // Replace with the actual path of your API route and any required query parameters
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/report?id=Example`,
         {
@@ -20,10 +19,7 @@ export default function DownloadButton() {
         throw new Error("Failed to fetch PDF");
       }
 
-      // Convert response to Blob
       const pdfBlob = await response.blob();
-
-      // Create a URL for the Blob
       const pdfUrl = URL.createObjectURL(pdfBlob);
 
       // Create an anchor element and trigger download
