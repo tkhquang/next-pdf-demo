@@ -28,7 +28,7 @@ bun dev
 
 Navigate to `http://localhost:3000/api/report` to download the pdf.
 
-[Emulate CSS media features](https://developer.chrome.com/docs/devtools/rendering/emulate-css) for development.
+[Emulate CSS media features](https://developer.chrome.com/docs/devtools/rendering/emulate-css#emulate_css_media_type_enable_print_preview) for development.
 
 ---
 
