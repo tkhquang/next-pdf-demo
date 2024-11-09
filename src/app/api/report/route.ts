@@ -25,6 +25,7 @@ async function renderChartToImage(id: string | null, timestamp: number) {
     try {
       browser = await puppeteer.launch({
         args: [
+          ...(isProduction ? chromium.args : []),
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--disable-dev-shm-usage",
@@ -38,10 +39,12 @@ async function renderChartToImage(id: string | null, timestamp: number) {
           "--hide-scrollbars",
           "--disable-web-security",
         ],
-        ...(isProduction && {
-          executablePath: await chromium.executablePath(),
-        }),
         headless: true,
+        ...(isProduction
+          ? {
+              executablePath: await chromium.executablePath(),
+            }
+          : {}),
       });
 
       const page = await browser.newPage();
