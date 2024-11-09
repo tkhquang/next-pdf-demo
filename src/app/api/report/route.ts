@@ -5,7 +5,7 @@ import chromium from "@sparticuz/chromium";
 import fsPromise from "fs/promises";
 import path from "path";
 import { PDFDocument } from "pdf-lib";
-import type { Browser } from "puppeteer"; // Import Browser type
+import type { Browser } from "puppeteer";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -61,8 +61,10 @@ async function renderPageToPDF(
         right: "0in",
         bottom: "0in",
         left: "0in",
-      }, // Prevent blank pages
+      },
     });
+  } catch (error) {
+    console.error("Error rendering page to PDF:", error);
   } finally {
     await page.close();
   }
@@ -79,7 +81,7 @@ async function mergePDFs(pdfPaths: string[]): Promise<Buffer> {
     );
     copiedPages.forEach((page) => mergedPdf.addPage(page));
   }
-  return Buffer.from(await mergedPdf.save()); // Convert Uint8Array to Buffer
+  return Buffer.from(await mergedPdf.save());
 }
 
 async function renderPageToImage(
@@ -99,18 +101,16 @@ async function renderPageToImage(
       : await import("puppeteer");
 
     try {
-      // Render pages concurrently using Promise.all
       const mainUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
       const additionalPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/other-page`;
 
+      // Render pages concurrently
       await Promise.all([
         renderPageToPDF(mainUrl, mainPdfPath, puppeteer),
         renderPageToPDF(additionalPageUrl, additionalPdfPath, puppeteer),
       ]);
 
-      // Merge the PDFs
       const mergedPdfBuffer = await mergePDFs([mainPdfPath, additionalPdfPath]);
-
       return { dirPath, mergedPdfBuffer };
     } catch (error) {
       console.error("Error rendering pages or merging PDFs:", error);
@@ -118,7 +118,7 @@ async function renderPageToImage(
     } finally {
       if (browser) {
         await browser.close();
-        browser = null; // Reset for the next request
+        browser = null;
       }
     }
   } catch (error) {
@@ -127,15 +127,6 @@ async function renderPageToImage(
   }
 }
 
-// Pre-launch the browser on server startup
-(async () => {
-  const puppeteer = isProduction
-    ? await import("puppeteer-core")
-    : await import("puppeteer");
-  browser = await getBrowserInstance(puppeteer);
-})();
-
-// For Vercel deployment
 export const maxDuration = 30;
 
 export async function GET(
@@ -150,7 +141,6 @@ export async function GET(
     const { dirPath, mergedPdfBuffer } = await renderPageToImage(id, timestamp);
 
     if (isProduction) {
-      // Remove the timestamped directory after the PDF is created
       await fsPromise.rm(dirPath, { recursive: true, force: true });
     }
 
