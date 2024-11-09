@@ -10,15 +10,13 @@
   },
   "dependencies": {
     "@sparticuz/chromium": "^130.0.0",
-    "@types/pdfmake": "^0.2.9",
     "classnames": "^2.5.1",
     "next": "14.2.17",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^23.7.1",
     "react": "^18",
     "react-dom": "^18",
-    "recharts": "^2.13.3",
-    "recharts-to-png": "^2.4.0"
+    "recharts": "^2.13.3"
   },
   "devDependencies": {
     "@types/node": "^20",
