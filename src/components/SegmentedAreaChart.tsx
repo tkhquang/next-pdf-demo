@@ -12,10 +12,32 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+const Y_AXIS_BOUNDARIES = {
+  MIN: 91,
+  MAX: 182,
+};
+
+const X_AXIS_BOUNDARIES = {
+  MIN: 58,
+  MAX: 122,
+};
+
 const referenceValue = {
   x: 95,
-  y: 130,
+  y: 125,
 };
+
+function getClosestInRange(value: number, range: [number, number]): number {
+  const [lowerBound, upperBound] = range;
+
+  if (value <= lowerBound) {
+    return lowerBound;
+  } else if (value >= upperBound) {
+    return upperBound;
+  } else {
+    return value;
+  }
+}
 
 function SegmentedLineChart() {
   return (
@@ -34,7 +56,7 @@ function SegmentedLineChart() {
         <YAxis
           dataKey="sys"
           type="number"
-          domain={[91, 182]}
+          domain={[Y_AXIS_BOUNDARIES.MIN, Y_AXIS_BOUNDARIES.MAX]}
           interval={0}
           tickFormatter={(tick: number) =>
             tick === 180 ? `>=${tick}` : `${tick}`
@@ -45,7 +67,7 @@ function SegmentedLineChart() {
         <XAxis
           dataKey="dias"
           type="number"
-          domain={[58, 122]}
+          domain={[X_AXIS_BOUNDARIES.MIN, X_AXIS_BOUNDARIES.MAX]}
           interval={0}
           tickFormatter={(tick: number) =>
             tick === 120 ? `>=${tick}` : `${tick}`
@@ -55,10 +77,10 @@ function SegmentedLineChart() {
         />
 
         <ReferenceArea
-          x1={58}
-          x2={122}
-          y1={91}
-          y2={182}
+          x1={X_AXIS_BOUNDARIES.MIN}
+          x2={X_AXIS_BOUNDARIES.MAX}
+          y1={Y_AXIS_BOUNDARIES.MIN}
+          y2={Y_AXIS_BOUNDARIES.MAX}
           fillOpacity={1}
           fill="red"
         >
@@ -70,13 +92,17 @@ function SegmentedLineChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            style={{
+              textShadow: "1px 1px #000000",
+              fontSize: "0.75rem",
+            }}
           />
         </ReferenceArea>
 
         <ReferenceArea
-          x1={58}
+          x1={X_AXIS_BOUNDARIES.MIN}
           x2={100}
-          y1={91}
+          y1={Y_AXIS_BOUNDARIES.MIN}
           y2={158}
           fillOpacity={1}
           fill="purple"
@@ -89,16 +115,20 @@ function SegmentedLineChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            style={{
+              textShadow: "1px 1px #000000",
+              fontSize: "0.75rem",
+            }}
           />
         </ReferenceArea>
 
         <ReferenceArea
-          x1={58}
+          x1={X_AXIS_BOUNDARIES.MIN}
           x2={90}
-          y1={91}
+          y1={Y_AXIS_BOUNDARIES.MIN}
           y2={140}
           fillOpacity={1}
-          fill="yellow"
+          fill="orange"
         >
           <Label
             value="Level 3"
@@ -108,14 +138,18 @@ function SegmentedLineChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            style={{
+              textShadow: "1px 1px #000000",
+              fontSize: "0.75rem",
+            }}
           />
         </ReferenceArea>
 
         <ReferenceArea
-          x1={58}
+          x1={X_AXIS_BOUNDARIES.MIN}
           x2={80}
-          y1={91}
-          y2={122}
+          y1={Y_AXIS_BOUNDARIES.MIN}
+          y2={X_AXIS_BOUNDARIES.MAX}
           fillOpacity={1}
           fill="green"
         >
@@ -127,6 +161,10 @@ function SegmentedLineChart() {
             position="insideTopRight"
             fontSize={14}
             fill="#FFFFFF"
+            style={{
+              textShadow: "1px 1px #000000",
+              fontSize: "0.75rem",
+            }}
           />
         </ReferenceArea>
 
@@ -136,7 +174,7 @@ function SegmentedLineChart() {
 
         <ReferenceLine
           segment={[
-            { x: referenceValue.x, y: 91 },
+            { x: referenceValue.x, y: Y_AXIS_BOUNDARIES.MIN },
             { x: referenceValue.x, y: referenceValue.y },
           ]}
           stroke="grey"
@@ -145,7 +183,7 @@ function SegmentedLineChart() {
 
         <ReferenceLine
           segment={[
-            { x: 58, y: referenceValue.y },
+            { x: X_AXIS_BOUNDARIES.MIN, y: referenceValue.y },
             { x: referenceValue.x, y: referenceValue.y },
           ]}
           stroke="grey"
@@ -153,8 +191,14 @@ function SegmentedLineChart() {
         />
 
         <ReferenceDot
-          x={referenceValue.x}
-          y={referenceValue.y}
+          x={getClosestInRange(referenceValue.x, [
+            X_AXIS_BOUNDARIES.MIN,
+            X_AXIS_BOUNDARIES.MAX,
+          ])}
+          y={getClosestInRange(referenceValue.y, [
+            Y_AXIS_BOUNDARIES.MIN,
+            Y_AXIS_BOUNDARIES.MAX,
+          ])}
           isFront
           shape={(props) => {
             // Adjust the `cx` and `cy` for proper alignment
@@ -181,6 +225,10 @@ function SegmentedLineChart() {
                   x="50"
                   y="30"
                   fill="#FFFFFF"
+                  style={{
+                    textShadow: "1px 1px #000000",
+                    fontSize: "0.75rem",
+                  }}
                   fontSize="14"
                   fontFamily="Arial"
                   textAnchor="middle"
