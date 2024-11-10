@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import DownloadButton from "@/components/DownloadButton";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -26,8 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased space-y-4`}
       >
+        <DownloadButton />
         {children}
       </body>
     </html>

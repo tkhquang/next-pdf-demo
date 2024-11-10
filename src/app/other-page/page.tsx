@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import Page from "@/components/common/Page";
 
@@ -10,6 +11,9 @@ interface PageProps<T = Record<string, unknown>> {
 export default async function OtherPage(props: PageProps) {
   return (
     <main>
+      <Link href="/" className="print:hidden">
+        First Page
+      </Link>
       <Page>
         <div className="flex-1 relative flex flex-col size-full border-2">
           <div className="absolute inset-0">

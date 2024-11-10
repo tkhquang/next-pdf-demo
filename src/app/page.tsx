@@ -1,6 +1,6 @@
+import Link from "next/link";
 import ChartPage from "@/components/ChartPage";
 import CoverPage from "@/components/CoverPage";
-import DownloadButton from "@/components/DownloadButton";
 
 interface PageProps<T = Record<string, unknown>> {
   params: T;
@@ -13,8 +13,9 @@ export default async function Home(props: PageProps) {
 
   return (
     <main>
-      <DownloadButton />
-      <div className="my-4"></div>
+      <Link href="/other-page" className="print:hidden" prefetch id="go-next">
+        Next Page
+      </Link>
       <CoverPage />
       <ChartPage id={id} />
     </main>
