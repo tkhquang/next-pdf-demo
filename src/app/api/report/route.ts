@@ -52,39 +52,7 @@ async function getBrowserInstance(): Promise<Browser> {
 }
 
 // Render a page to a PDF
-async function renderPageToPDF(url: string, pdfPath: string): Promise<void> {
-  const browser = await getBrowserInstance();
-  const page = await browser!.newPage();
-
-  try {
-    await page.goto(url, { waitUntil: "networkidle0" });
-
-    if (!isProduction) {
-      // Take a screenshot for debugging in development
-      await page.screenshot({
-        path: pdfPath.replace(".pdf", ".png"),
-        fullPage: true,
-      });
-    }
-
-    await page.emulateMediaType("print");
-    await page.pdf({
-      format: "A4",
-      path: pdfPath,
-      printBackground: true,
-      margin: {
-        top: "0in",
-        right: "0in",
-        bottom: "0in",
-        left: "0in",
-      },
-    });
-  } catch (error) {
-    console.error(`Error rendering page at ${url} to PDF:`, error);
-  } finally {
-    await page.close();
-  }
-}
+async function renderPageToPDF(url: string, pdfPath: string): Promise<void> {}
 
 // Merge multiple PDFs into a single buffer
 async function mergePDFs(pdfPaths: string[]): Promise<Buffer> {
@@ -116,10 +84,66 @@ async function renderPagesToMergedPDF(
     const mainUrl = `${process.env.NEXT_PUBLIC_BASE_URL}?id=${id}`;
     const additionalPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/other-page`;
 
-    await Promise.all([
-      renderPageToPDF(mainUrl, mainPdfPath),
-      renderPageToPDF(additionalPageUrl, additionalPdfPath),
-    ]);
+    const browser = await getBrowserInstance();
+    const page = await browser!.newPage();
+
+    try {
+      await page.goto(mainUrl, { waitUntil: "networkidle0" });
+
+      if (!isProduction) {
+        // Take a screenshot for debugging in development
+        await page.screenshot({
+          path: mainPdfPath.replace(".pdf", ".png"),
+          fullPage: true,
+        });
+      }
+
+      await page.emulateMediaType("print");
+      await page.pdf({
+        format: "A4",
+        path: mainPdfPath,
+        printBackground: true,
+        margin: {
+          top: "0in",
+          right: "0in",
+          bottom: "0in",
+          left: "0in",
+        },
+      });
+
+      await page.emulateMediaType("screen");
+
+      await page.click("#go-next");
+      await page.waitForNavigation({ waitUntil: "networkidle0" });
+
+      if (!isProduction) {
+        // Take a screenshot for debugging in development
+        await page.screenshot({
+          path: additionalPdfPath.replace(".pdf", ".png"),
+          fullPage: true,
+        });
+      }
+
+      await page.emulateMediaType("print");
+      await page.pdf({
+        format: "A4",
+        path: additionalPdfPath,
+        printBackground: true,
+        margin: {
+          top: "0in",
+          right: "0in",
+          bottom: "0in",
+          left: "0in",
+        },
+      });
+    } catch (error) {
+      console.error(
+        `Error rendering page at ${additionalPageUrl} to PDF:`,
+        error
+      );
+    } finally {
+      await page.close();
+    }
 
     const mergedPdfBuffer = await mergePDFs([mainPdfPath, additionalPdfPath]);
     return { dirPath, mergedPdfBuffer };
