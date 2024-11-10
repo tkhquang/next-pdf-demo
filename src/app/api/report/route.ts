@@ -109,9 +109,7 @@ async function renderPagesToMergedPDF(
       });
 
       await page.emulateMediaType("screen");
-
-      await page.click("#go-next");
-      await page.waitForNavigation({ waitUntil: "networkidle0" });
+      await Promise.all([page.waitForNavigation(), page.click("#go-next")]);
 
       if (!isProduction) {
         // Take a screenshot for debugging in development
