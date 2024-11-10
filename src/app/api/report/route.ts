@@ -66,6 +66,9 @@ async function getBrowserInstance(): Promise<Browser> {
   return browser!;
 }
 
+// Render a page to a PDF
+async function renderPageToPDF(url: string, pdfPath: string): Promise<void> {}
+
 // Merge multiple PDFs into a single buffer
 async function mergePDFs(pdfPaths: string[]): Promise<Buffer> {
   const mergedPdf = await PDFDocument.create();
